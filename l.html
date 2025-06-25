@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <title>Alls - Marché Libre</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-light: #818cf8;
+            --primary-dark: #5b67db;
+            --secondary: #10d9c4;
+            --secondary-dark: #0db5a3;
+            --accent: #ff6b6b;
+            --accent-dark: #ff5252;
+            --warning: #feca57;
+            --warning-dark: #ff9ff3;
+            --success: #1dd1a1;
+            --success-dark: #10ac84;
+            --background: #0f0f23;
+            --surface: #1a1a2e;
+            --surface-light: #16213e;
+            --text-primary: #eee;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666;
+            --border: rgba(255, 255, 255, 0.1);
+            --border-light: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-dark: rgba(0, 0, 0, 0.3);
+            --glow: 0 0 30px rgba(102, 126, 234, 0.3);
+            --glow-secondary: 0 0 30px rgba(16, 217, 196, 0.3);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--warning) 100%);
+            --gradient-surface: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 217, 196, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            z-index: -2;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(2deg); }
+        }
+
+        /* Floating particles */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.1), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(102, 126, 234, 0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(16, 217, 196, 0.2), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255, 107, 107, 0.1), transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: particlesFloat 30s linear infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes particlesFloat {
+            0% { transform: translateY(0px) translateX(0px); }
+            100% { transform: translateY(-100px) translateX(-50px); }
+        }
+
+        /* Enhanced Header */
+        .header {
+            background: var(--gradient-surface);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), var(--glow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .header:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), var(--glow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            position: relative;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            0% { filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5)); }
+            100% { filter: drop-shadow(0 0 20px rgba(16, 217, 196, 0.8)); }
+        }
+
+        /* Enhanced Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6), var(--glow);
+        }
+
+        .btn-about {
+            background: var(--gradient-accent);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            margin-left: 0.5rem;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-about:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(29, 209, 161, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(29, 209, 161, 0.6);
+        }
+
+        .btn-warning {
+            background: var(--gradient-accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(254, 202, 87, 0.4);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(254, 202, 87, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-light) 100%);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Enhanced Form Section */
+        .form-section {
+            margin-bottom: 4rem;
+        }
+
+        .form-card {
+            background: var(--gradient-surface);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            animation: formSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes formSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 35px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.15),
+                var(--glow);
+        }
+
+        .form-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: headerShine 4s ease-in-out infinite;
+        }
+
+        @keyframes headerShine {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) rotate(180deg); }
+        }
+
+        .form-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            z-index: 1;
+            position: relative;
+        }
+
+        .form-header i {
+            font-size: 1.8rem;
+            z-index: 1;
+            position: relative;
+        }
+
+        .form-content {
+            padding: 2.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .form-group, .form-group-country {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .form-country-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-label .required {
+            color: var(--accent);
+        }
+
+        .form-input {
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), 0 0 20px rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .country-flag {
+            display: inline-block;
+            vertical-align: middle;
+            width: 40px;
+            height: 28px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background-size: cover;
+            background-position: 50% 50%;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .country-flag:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: flex-end;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Enhanced Articles Section */
+        .articles-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .articles-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+        }
+
+        .article-card {
+            background: var(--gradient-surface);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            transform: translateY(0);
+        }
+
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(16, 217, 196, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .article-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                var(--glow);
+        }
+
+        .article-card:hover::before {
+            opacity: 1;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            background: var(--surface);
+            transition: all 0.4s ease;
+            cursor: zoom-in;
+        }
+
+        .article-card:hover .article-image {
+            transform: scale(1.05);
+            filter: brightness(1.1) saturate(1.2);
+        }
+
+        .article-content {
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .article-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .article-id {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .article-contact {
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-whatsapp {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        .contact-whatsapp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.6);
+        }
+
+        .contact-email {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .contact-email:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Enhanced Loading States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+            background: var(--gradient-surface);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+        }
+
+        .spinner {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+            background: var(--gradient-surface);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.6;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Enhanced Modal */
+        .modal-apropos {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-apropos.active {
+            display: flex;
+        }
+
+        .modal-content-apropos {
+            background: var(--gradient-surface);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                var(--glow);
+            padding: 3rem;
+            max-width: 500px;
+            width: 90vw;
+            position: relative;
+            text-align: center;
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+        }
+
+        @keyframes modalSlideIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-content-apropos h3 {
+            margin-bottom: 1.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .modal-content-apropos p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .modal-apropos .close-modal {
+            position: absolute;
+            top: 1.5rem; right: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-apropos .close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Enhanced Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            background: var(--gradient-surface);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+
+        /* Enhanced Image Modal */
+        #image-modal {
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        #modal-image {
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), var(--glow);
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive Enhancements */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .main {
+                padding: 2rem 1rem;
+            }
+
+            .form-content {
+                padding: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions, .article-actions {
+                flex-direction: column;
+            }
+
+            .articles-section h2 {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* Enhanced Animations */
+        .fade-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hidden state */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Micro-interactions */
+        .btn, .contact-link, .article-card, .form-input {
+            will-change: transform;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection styling */
+        ::selection {
+            background: rgba(102, 126, 234, 0.3);
+            color: var(--text-primary);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--surface);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                <span>BIENVENUE A VOUS SUR ALLs '' Un marché pour tous''</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <button class="btn btn-primary" id="toggle-form-btn">
+                    <i class="fas fa-plus"></i>
+                    Publier un article
+                </button>
+                <a href="apropos.html" class="btn-about" style="text-decoration: none;">
+    <i class="fas fa-info-circle"></i>
+    À propos
+</a>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Modal À propos -->
+    <div class="modal-apropos" id="modal-apropos">
+        <div class="modal-content-apropos">
+            <button class="close-modal" id="close-apropos" aria-label="Fermer">&times;</button>
+            <h3>À propos de Alls</h3>
+            <p>
+                Alls est une plateforme de marché libre permettant à tous de publier et consulter des articles en toute simplicité.<br>
+                Achetez, vendez et échangez facilement, partout et à tout moment !
+            </p>
+        </div>
+    </div>
+
+    <main class="main">
+        <!-- Form Section -->
+        <div id="form-section" class="form-section hidden">
+            <div class="form-card fade-in">
+                <div class="form-header">
+                    <i class="fas fa-plus-circle"></i>
+                    <h2>Publier un nouvel article</h2>
+                </div>
+                <div class="form-content">
+                    <form id="article-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nom de l'article <span class="required">*</span>
+                                </label>
+                                <input type="text" id="nom" class="form-input" placeholder="Ex: iPhone 14 Pro Max" required />
+                            </div>
+                            <div class="form-group-country">
+                                <label class="form-label">
+                                    <i class="fas fa-globe"></i>
+                                    Pays <span class="required">*</span>
+                                </label>
+                                <div class="form-country-row">
+                                    <select id="pays" class="form-input" required>
+                                        <option value="" data-flag="">-- Choisissez un pays --</option>
+                                        <option value="CI" data-flag="https://flagcdn.com/ci.svg" data-indicatif="+225">Côte d'Ivoire</option>
+                                        <option value="SN" data-flag="https://flagcdn.com/sn.svg" data-indicatif="+221">Sénégal</option>
+                                        <option value="BJ" data-flag="https://flagcdn.com/bj.svg" data-indicatif="+229">Bénin</option>
+                                        <option value="TG" data-flag="https://flagcdn.com/tg.svg" data-indicatif="+228">Togo</option>
+                                        <option value="CI" data-flag="https://flagcdn.com/ci.svg" data-indicatif="+225">Côte d'Ivoire</option>
+                                        <option value="CM" data-flag="https://flagcdn.com/cm.svg" data-indicatif="+237">Cameroun</option>
+                                        <option value="FR" data-flag="https://flagcdn.com/fr.svg" data-indicatif="+33">France</option>
+                                        <option value="BF" data-flag="https://flagcdn.com/bf.svg" data-indicatif="+226">Burkina Faso</option>
+                                    </select>
+                                    <span id="flag-container"></span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Prix (FCFA) <span class="required">*</span>
+                                </label>
+                                <input type="number" id="prix" class="form-input" placeholder="Ex: 450000" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-phone"></i>
+                                    Contact WhatsApp ou Email <span class="required">*</span>
+                                </label>
+                                <input type="text" id="contact" class="form-input" placeholder="Ex: +225XXXXXXXX ou email@example.com" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-camera"></i>
+                                    Photo de l'article <span class="required">*</span>
+                                </label>
+                                <input type="file" id="photo" class="form-input" accept="image/*" required />
+                                <small style="color: var(--text-secondary); font-size: 0.75rem;">Maximum 200Ko (sera automatiquement ajustée si besoin)</small>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-btn">
+                                <i class="fas fa-times"></i>
+                                Annuler
+                            </button>
+                            <button type="submit" class="btn btn-success" id="submit-btn">
+                                <i class="fas fa-check"></i>
+                                Publier l'article
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Articles Section -->
+        <div class="articles-section">
+            <h2>
+                <i class="fas fa-shopping-bag"></i>
+                Articles récents
+            </h2>
+            <div id="articles" class="articles-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Chargement des articles...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alls - Marché ouvert à tous. Plateforme de commerce en ligne.</p>
+    </footer>
+<script>
+    // Configuration Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyAj_JRgQupGeETFrVz1IbcEC1HZSRKur5E",
+    authDomain: "marcher-5a39b.firebaseapp.com",
+    databaseURL: "https://marcher-5a39b-default-rtdb.firebaseio.com",
+    projectId: "marcher-5a39b",
+    storageBucket: "marcher-5a39b.appspot.com",
+    messagingSenderId: "133904247907",
+    appId: "1:133904247907:web:da360e798307fb982e1c56",
+    measurementId: "G-BH7H6FQ6VX"
+};
+
+// Initialisation Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Variables globales
+const elements = {
+    formSection: document.getElementById("form-section"),
+    toggleBtn: document.getElementById("toggle-form-btn"),
+    articlesContainer: document.getElementById("articles"),
+    articleForm: null
+};
+
+let state = {
+    formVisible: false,
+    articles: {},
+    loading: true
+};
+
+function toggleForm(autoShow = false) {
+    state.formVisible = autoShow ? true : !state.formVisible;
+    if (state.formVisible) {
+        elements.formSection.classList.remove('hidden');
+        elements.toggleBtn.innerHTML = '<i class="fas fa-times"></i> Fermer le formulaire';
+        initFormHandlers();
+
+        // Scroll automatique vers le formulaire
+        setTimeout(() => {
+            elements.formSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 100);
+    } else {
+        elements.formSection.classList.add('hidden');
+        elements.toggleBtn.innerHTML = '<i class="fas fa-plus"></i> Publier un article';
+    }
+}
+
+function initFormHandlers() {
+    const form = document.getElementById('article-form');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const paysSelect = document.getElementById('pays');
+    const flagContainer = document.getElementById('flag-container');
+
+    if (form && !form.dataset.initialized) {
+        form.addEventListener('submit', handleFormSubmit);
+        form.dataset.initialized = 'true';
+    }
+
+    if (cancelBtn) {
+        cancelBtn.onclick = () => toggleForm(false);
+    }
+
+    if (paysSelect && flagContainer) {
+        paysSelect.addEventListener('change', function () {
+            const selectedOption = paysSelect.options[paysSelect.selectedIndex];
+            const flagUrl = selectedOption.getAttribute('data-flag');
+            flagContainer.innerHTML = flagUrl ? `<span class="country-flag" style="background-image:url('${flagUrl}')"></span>` : '';
+
+            // --- Début auto-remplissage de l'indicatif ---
+            const indicatif = selectedOption.getAttribute('data-indicatif');
+            const contactInput = document.getElementById('contact');
+            // On ne remplit que si le champ est vide ou ne commence pas déjà par '+'
+            if (
+                indicatif &&
+                contactInput &&
+                (
+                    contactInput.value.trim() === '' ||
+                    contactInput.value.trim().charAt(0) !== '+'
+                )
+            ) {
+                contactInput.value = indicatif;
+                contactInput.focus();
+                // Place le curseur à la fin de l'indicatif
+                contactInput.setSelectionRange(contactInput.value.length, contactInput.value.length);
+            }
+            // --- Fin auto-remplissage de l'indicatif ---
+        });
+    }
+}
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const formData = {
+        nom: document.getElementById("nom").value.trim(),
+        pays: document.getElementById("pays").value,
+        prix: document.getElementById("prix").value.trim(),
+        contact: document.getElementById("contact").value.trim(),
+        photo: document.getElementById("photo").files[0]
+    };
+
+    const submitBtn = document.getElementById("submit-btn");
+
+    // Validation
+    if (!formData.nom || !formData.prix || !formData.contact || !formData.photo || !formData.pays) {
+        alert("Tous les champs sont obligatoires !");
+        return;
+    }
+
+    // Redimensionner et compresser l'image si > 200Ko
+    let photoDataUrl;
+    try {
+        photoDataUrl = await compressImageToUnder200KB(formData.photo);
+    } catch (error) {
+        alert("Impossible de traiter l'image. Essayez avec une autre photo.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Publier l\'article';
+        return;
+    }
+
+    // État de chargement
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publication...';
+
+    try {
+        const paysSelect = document.getElementById("pays");
+        const selectedOption = paysSelect.options[paysSelect.selectedIndex];
+        const flagUrl = selectedOption.getAttribute('data-flag') || '';
+
+        const newArticleRef = db.ref("articles").push();
+        const articleData = {
+            id: newArticleRef.key,
+            nom: formData.nom,
+            pays: formData.pays,
+            flagUrl: flagUrl,
+            prix: formData.prix,
+            contact: formData.contact,
+            photoDataUrl: photoDataUrl,
+            createdAt: Date.now()
+        };
+
+        await newArticleRef.set(articleData);
+
+        document.getElementById('article-form').reset();
+        document.getElementById('flag-container').innerHTML = '';
+        toggleForm(false);
+
+        showNotification('Article publié avec succès !', 'success');
+
+    } catch (error) {
+        console.error('Erreur lors de la publication:', error);
+        alert("Erreur lors de la publication. Veuillez réessayer.");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Publier l\'article';
+    }
+}
+
+// Fonction pour compresser/redimensionner l'image en moins de 200ko
+function compressImageToUnder200KB(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const img = new Image();
+            img.onload = function () {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let width = img.width;
+                let height = img.height;
+                let maxAttempts = 10;
+                let attempt = 0;
+                let quality = 0.92; // start high, decrease if needed
+
+                function tryCompress() {
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    let size = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
+
+                    // Si <= 200ko, nickel, sinon on réduit qualité et/ou taille
+                    if (size <= 200 * 1024 || attempt >= maxAttempts) {
+                        resolve(dataUrl);
+                    } else {
+                        // Réduire la qualité ou la taille
+                        if (quality > 0.5) {
+                            quality -= 0.08;
+                        } else {
+                            width *= 0.85;
+                            height *= 0.85;
+                        }
+                        attempt++;
+                        setTimeout(tryCompress, 0);
+                    }
+                }
+                tryCompress();
+            };
+            img.onerror = reject;
+            img.src = event.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function getContactLink(article) {
+    const isWhatsApp = article.contact && (article.contact.includes("+") || /^\d{8,15}$/.test(article.contact));
+    const message = encodeURIComponent(`Bonjour, je suis intéressé par l'article "${article.nom}" (${article.prix} FCFA), ID: ${article.id} (vu sur Alls).`);
+
+    if (isWhatsApp) {
+        const tel = article.contact.replace(/[^0-9+]/g, "");
+        return `<a href="https://wa.me/${tel}?text=${message}" target="_blank" rel="noopener noreferrer" class="contact-link contact-whatsapp">
+            <i class="fab fa-whatsapp"></i>
+            ${article.contact}
+        </a>`;
+    } else {
+        const subject = encodeURIComponent(`Commande de l'article Alls N°${article.id}`);
+        const emailBody = encodeURIComponent(`Bonjour, je souhaite commander l'article "${article.nom}" (${article.prix} FCFA), ID: ${article.id} (vu sur Alls).`);
+        return `<a href="mailto:${article.contact}?subject=${subject}&body=${emailBody}" class="contact-link contact-email">
+            <i class="fas fa-envelope"></i>
+            ${article.contact}
+        </a>`;
+    }
+}
+
+function renderArticle(article) {
+    return `
+        <div class="article-card fade-in" id="article-${article.id}">
+            <img src="${article.photoDataUrl}" alt="${article.nom}" class="article-image clickable-article-image" data-img="${article.photoDataUrl}" loading="lazy" />
+            <div class="article-content">
+                <h3 class="article-title">${article.nom}</h3>
+                <div class="article-price">
+                    ${parseInt(article.prix).toLocaleString()} FCFA
+                    ${article.flagUrl ? `<span class="country-flag" style="background-image:url('${article.flagUrl}')"></span>` : ''}
+                </div>
+                <div class="article-id">ID: ${article.id} ${article.pays ? '- ' + article.pays : ''}</div>
+                <div class="article-contact">
+                    <div class="contact-label">Contact :</div>
+                    ${getContactLink(article)}
+                </div>
+                <div class="article-actions">
+                    <button class="btn btn-warning" onclick="commanderArticle('${article.id}')" style="flex: 1;">
+                        <i class="fas fa-shopping-cart"></i>
+                        Commander
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Modal pour agrandir la photo
+function createImageModal() {
+    if (document.getElementById('image-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'image-modal';
+    modal.style.display = 'none';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.8)';
+    modal.style.zIndex = '10000';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.cursor = 'zoom-out';
+
+    modal.innerHTML = `
+        <img id="modal-image" src="" alt="Agrandissement" style="max-width:90vw;max-height:90vh;box-shadow:0 4px 32px #000;" />
+    `;
+
+    modal.onclick = function () {
+        modal.style.display = 'none';
+        document.getElementById('modal-image').src = '';
+        document.body.style.overflow = '';
+    };
+
+    document.body.appendChild(modal);
+}
+
+function setupBigImageOnClick() {
+    createImageModal();
+    document.querySelectorAll('.clickable-article-image').forEach(img => {
+        img.onclick = function (e) {
+            e.stopPropagation();
+            const src = this.getAttribute('data-img');
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image');
+            if (src && modal && modalImg) {
+                modalImg.src = src;
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    });
+}
+
+function commanderArticle(articleId) {
+    const article = state.articles[articleId];
+    if (!article) return;
+
+    const subject = encodeURIComponent(`Commande de l'article Alls N°${article.id}`);
+    const message = encodeURIComponent(`Bonjour, je souhaite commander l'article "${article.nom}" (${article.prix} FCFA), ID: ${article.id} (vu sur Alls).`);
+
+    const isWhatsApp = article.contact && (article.contact.includes("+") || /^\d{8,15}$/.test(article.contact));
+
+    if (isWhatsApp) {
+        const tel = article.contact.replace(/[^0-9+]/g, "");
+        window.open(`https://wa.me/${tel}?text=${message}`, "_blank");
+    } else {
+        window.location.href = `mailto:${article.contact}?subject=${subject}&body=${message}`;
+    }
+}
+
+function renderArticles() {
+    const articlesArray = Object.values(state.articles).sort((a, b) => b.createdAt - a.createdAt);
+
+    if (articlesArray.length === 0) {
+        elements.articlesContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-shopping-bag"></i>
+                <h3>Aucun article pour le moment</h3>
+                <p>Soyez le premier à publier un article !</p>
+            </div>
+        `;
+    } else {
+        elements.articlesContainer.innerHTML = articlesArray.map(renderArticle).join('');
+    }
+    setupBigImageOnClick();
+}
+
+function showNotification(message, type = 'info') {
+    // Simple notification - peut être améliorée avec une library
+    console.log(`${type}: ${message}`);
+}
+
+function initializeApp() {
+    // Affiche le formulaire automatiquement quand on clique sur Publier un article
+    elements.toggleBtn.addEventListener('click', () => toggleForm(true));
+    loadArticles();
+}
+
+function loadArticles() {
+    db.ref('articles').once('value')
+        .then(snapshot => {
+            state.articles = {};
+            snapshot.forEach(childSnap => {
+                const article = childSnap.val();
+                article.id = childSnap.key;
+                state.articles[article.id] = article;
+            });
+            state.loading = false;
+            renderArticles();
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement:', error);
+            elements.articlesContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Erreur de chargement</h3>
+                    <p>Impossible de charger les articles. Veuillez actualiser la page.</p>
+                </div>
+            `;
+        });
+
+    db.ref('articles').on('child_added', snapshot => {
+        const article = snapshot.val();
+        article.id = snapshot.key;
+        if (!state.loading && !state.articles[article.id]) {
+            state.articles[article.id] = article;
+            renderArticles();
+        }
+    });
+
+    db.ref('articles').on('child_removed', snapshot => {
+        const articleId = snapshot.key;
+        if (state.articles[articleId]) {
+            delete state.articles[articleId];
+            renderArticles();
+        }
+    });
+}
+
+window.commanderArticle = commanderArticle;
+document.addEventListener('DOMContentLoaded', initializeApp);
+</script>

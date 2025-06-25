@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <title>Statistiques Fournisseur - Marché Libre</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; margin:0; padding:0; }
+        .container { max-width: 1000px; margin: 2rem auto; background: #fff; border-radius:1rem; box-shadow: 0 2px 16px #0001; padding:2rem; }
+        h1 { color: #2563EB; font-size:2rem; margin-bottom:1.5rem }
+        .stats { display:flex; gap:2rem; margin-bottom:2rem; flex-wrap:wrap;}
+        .stat { flex:1 1 200px; background:#f1f5f9; border-radius:0.7rem; padding:1rem 1.2rem; text-align:center; }
+        .stat .label { font-size:1.1rem; color:#1e293b; }
+        .stat span { font-size:2rem; font-weight:700; color:#10B981 }
+        .clients-table { width:100%; border-collapse: collapse; margin-top:1rem }
+        .clients-table th, .clients-table td { padding:0.7rem 1rem; border-bottom:1px solid #e5e7eb; }
+        .clients-table th { color:#2563EB; font-size:1rem; text-align:left;}
+        .commande-list { margin-top:0.5rem; }
+        .commande-card { background:#f8fafc; border-radius:0.5rem; box-shadow:0 1px 4px #0001; padding:0.7rem 1rem; margin-bottom:0.5rem; }
+        .no-commande { color:#999; font-style:italic; }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-chart-bar"></i> Statistiques du marché</h1>
+        <div class="stats">
+            <div class="stat">
+                <div class="label">Total clients (ayant commandé)</div>
+                <span id="total-clients">0</span>
+            </div>
+            <div class="stat">
+                <div class="label">Total commandes</div>
+                <span id="total-commandes">0</span>
+            </div>
+            <div class="stat">
+                <div class="label">Publications aujourd'hui</div>
+                <span id="total-publishers-today">0</span>
+            </div>
+        </div>
+        <table class="clients-table">
+            <thead>
+                <tr>
+                    <th>Numéro du client</th>
+                    <th>Nombre de commandes</th>
+                    <th>Détail des commandes</th>
+                </tr>
+            </thead>
+            <tbody id="clients-tbody">
+                <tr><td colspan="3" style="text-align:center;color:#999">Chargement...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        // Config Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAj_JRgQupGeETFrVz1IbcEC1HZSRKur5E",
+            authDomain: "marcher-5a39b.firebaseapp.com",
+            databaseURL: "https://marcher-5a39b-default-rtdb.firebaseio.com",
+            projectId: "marcher-5a39b",
+            storageBucket: "marcher-5a39b.appspot.com",
+            messagingSenderId: "133904247907",
+            appId: "1:133904247907:web:da360e798307fb982e1c56",
+            measurementId: "G-BH7H6FQ6VX"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function formatDate(ts) {
+            if (!ts) return "-";
+            const d = new Date(ts);
+            return d.toLocaleDateString("fr-FR") + " " + d.toLocaleTimeString("fr-FR").slice(0,5);
+        }
+
+        function updateStats(clientsData, nbPublishersToday, totalCmd) {
+            document.getElementById("total-clients").textContent = Object.keys(clientsData).length;
+            document.getElementById("total-commandes").textContent = totalCmd;
+            document.getElementById("total-publishers-today").textContent = nbPublishersToday;
+        }
+
+        function renderClients(clientsData) {
+            const tbody = document.getElementById('clients-tbody');
+            tbody.innerHTML = '';
+            if (!clientsData || Object.keys(clientsData).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#999">Aucune commande trouvée</td></tr>`;
+                return;
+            }
+            Object.entries(clientsData).forEach(([num, commandes]) => {
+                const nbCmd = Object.keys(commandes).length;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${num}</td>
+                    <td>${nbCmd}</td>
+                    <td>
+                        <div class="commande-list">
+                            ${
+                                Object.values(commandes).map(cmd => `
+                                    <div class="commande-card">
+                                        <b>${cmd.nomArticle || cmd.nom || '-'}</b> <br>
+                                        Prix: <span style="color:#10B981">${cmd.prix || '-'}</span> <br>
+                                        Date: <span style="font-size:0.95em">${cmd.date ? formatDate(cmd.date) : '-'}</span>
+                                    </div>
+                                `).join('')
+                            }
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Cette fonction calcule le nombre de personnes ayant publié aujourd'hui
+        function getTodayPublishers(articlesData) {
+            if (!articlesData) return 0;
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10); // "2025-06-01"
+            const publisherSet = new Set();
+            Object.values(articlesData).forEach(article => {
+                if (article.date) {
+                    const d = new Date(article.date);
+                    // Comparer la date en YYYY-MM-DD
+                    const dateStr = d.toISOString().slice(0, 10);
+                    if (dateStr === todayStr && article.contact) {
+                        publisherSet.add(article.contact);
+                    }
+                }
+            });
+            return publisherSet.size;
+        }
+
+        // Charger les commandes et les articles pour les stats
+        function loadStats() {
+            db.ref("commandes").on("value", snapshot => {
+                const clientsData = snapshot.val() || {};
+                // Total commandes
+                let totalCmd = 0;
+                Object.values(clientsData).forEach(cmds => totalCmd += Object.keys(cmds).length);
+
+                // Charger les articles pour compter les publishers du jour
+                db.ref("articles").once("value").then(articleSnap => {
+                    const articlesData = articleSnap.val() || {};
+                    const nbPublishersToday = getTodayPublishers(articlesData);
+                    updateStats(clientsData, nbPublishersToday, totalCmd);
+                });
+
+                renderClients(clientsData);
+            });
+        }
+
+        // Lancer au chargement
+        loadStats();
+    </script>
+</body>
+</html>
